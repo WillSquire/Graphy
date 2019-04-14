@@ -1,0 +1,38 @@
+version: '3.7'
+
+services:
+  api:
+    build:
+      context: ./api
+    secrets:
+      - db_name
+      - db_user
+      - db_password
+    command: ./api --db-name-file="/run/secrets/db_name" --db-user-file="/run/secrets/db_user" --db-password-file="/run/secrets/db_password"
+    depends_on:
+      - db
+    ports:
+      - 8000:8000
+    restart: always
+  db:
+    image: postgres:11.2-alpine
+    secrets:
+      - db_name
+      - db_user
+      - db_password
+    environment:
+      POSTGRES_DATABASE_FILE: /run/secrets/db_name
+      POSTGRES_USER_FILE: /run/secrets/db_user
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    ports:
+      - 5432:5432
+    volumes:
+      - ./db/data:/var/lib/postgresql/data:delegated
+    restart: always
+secrets:
+  db_user:
+    file: ./secrets/db_user.txt
+  db_password:
+    file: ./secrets/db_password.txt
+  db_name:
+    file: ./secrets/db_name.txt
