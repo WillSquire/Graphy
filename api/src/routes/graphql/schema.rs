@@ -1,5 +1,5 @@
 use crate::context::Context;
-use crate::models::user::{User, UserEdit};
+use crate::models::user::{User, UserCreate, UserEdit};
 use juniper::{FieldResult, RootNode};
 use uuid::Uuid;
 
@@ -14,12 +14,20 @@ graphql_object!(Query: Context |&self| {
 pub struct Mutation;
 
 graphql_object!(Mutation: Context |&self| {
-  field createUser(&executor, user: UserEdit) -> FieldResult<bool> {
-    Ok(User::create(&executor.context().db.connect()?, &user)?)
+  field createUser(&executor, user: UserCreate) -> FieldResult<bool> {
+    Ok(User::create(
+      &executor.context().db.connect()?,
+      &executor.context().hasher,
+      &user
+    )?)
   }
 
   field updateUser(&executor, user: UserEdit) -> FieldResult<bool> {
-    Ok(User::update(&executor.context().db.connect()?, &user)?)
+    Ok(User::update(
+      &executor.context().db.connect()?,
+      &executor.context().hasher,
+      &user
+    )?)
   }
 
   field deleteUser(&executor, id: Uuid) -> FieldResult<bool> {
