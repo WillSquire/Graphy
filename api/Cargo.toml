@@ -7,9 +7,11 @@ description = "GraphQL API server"
 [dependencies]
 clap = "2.32.0"
 diesel = { version = "1.4.1", features = ["postgres", "r2d2", "uuidv07"] }
+jsonwebtoken = "5.0.1"
 juniper = "0.11.1"
 juniper_rocket = "0.2.0"
 r2d2 = "0.8.4"
 rocket = "0.4.0"
 rust-argon2 = "0.4.0"
-uuid = { version = "0.7.2", features = ["v4"] }
+serde = { version = "1.0.90", features = ["derive"] }
+uuid = { version = "0.7.2", features = ["v4", "serde"] }

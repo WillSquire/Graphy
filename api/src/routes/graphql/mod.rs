@@ -1,10 +1,10 @@
 pub mod schema;
 
+use self::schema::Schema;
+use crate::context::Context;
 use juniper_rocket::{graphiql_source, GraphQLRequest, GraphQLResponse};
 use rocket::response::content::Html;
 use rocket::State;
-use crate::context::Context;
-use self::schema::Schema;
 
 #[get("/")]
 pub fn graphiql() -> Html<String> {

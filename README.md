@@ -1,6 +1,6 @@
 # Graphy
 
-A simple Rust Graphql server starter project.
+A Rust GraphQL server starter project.
 
 ## Setup
 
@@ -13,6 +13,14 @@ Add secrets to `secrets/` directory:
 By Docker convention sensitive information is passed by
 secrets and is read by file, whilst non-sensitive
 is passed by a normal arg.
+
+### Config
+
+Environmental specific arguments (such as `db_password`)
+are passed in at runtime via CLI `args` and
+parsed in `Config`.
+
+Project specific arguments are
 
 ### For development
 

@@ -7,6 +7,7 @@ pub struct Config {
   pub db_user: String,
   pub db_password: String,
   pub db_server: String,
+  pub hash_salt: String,
 }
 
 impl Config {
@@ -85,6 +86,25 @@ impl Config {
           .takes_value(true)
           .default_value("127.0.0.1"),
       )
+      .arg(
+        Arg::with_name("hash-salt")
+          .long("hash-salt")
+          .value_name("SALT")
+          .help("Sets hash salt")
+          .takes_value(true),
+      )
+      .arg(
+        Arg::with_name("hash-salt-file")
+          .long("hash-salt-file")
+          .value_name("FILE")
+          .help("Sets hash salt via file")
+          .takes_value(true),
+      )
+      .group(
+        ArgGroup::with_name("hasher-salt")
+          .args(&["hash-salt", "hash-salt-file"])
+          .required(true),
+      )
       .get_matches();
 
     let find_arg = |val, file| -> Result<String, Error> {
@@ -104,6 +124,7 @@ impl Config {
       db_user: find_arg("db-user", "db-user-file")?,
       db_password: find_arg("db-password", "db-password-file")?,
       db_server: args.value_of("db-server").unwrap().to_string(),
+      hash_salt: find_arg("hash-salt", "hash-salt-file")?,
     })
   }
 }

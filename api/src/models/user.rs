@@ -1,9 +1,13 @@
 use crate::db::Connection;
 use crate::error::Error;
-use crate::hasher::Hasher;
+use crate::hasher::{HashVerifier, Hasher};
 use crate::models::schema::users;
+use crate::tokeniser::Tokeniser;
 use diesel::prelude::*;
 use uuid::Uuid;
+
+// Todo: Add validator to create & update fields
+// E.g. https://github.com/Keats/validator
 
 #[derive(GraphQLObject, Identifiable, Queryable)]
 #[table_name = "users"]
@@ -31,17 +35,26 @@ pub struct UserEdit {
   pub name: Option<String>,
 }
 
+#[derive(GraphQLInputObject, Queryable)]
+pub struct UserLogin {
+  pub email: String,
+  pub password: String,
+}
+
 impl User {
-  pub fn create(connection: &Connection, hash: &Hasher, user: &UserCreate) -> Result<bool, Error> {
-    Ok(
-      diesel::insert_into(users::table)
-        .values(UserCreate {
-          password: hash(&user.password)?,
-          ..user.clone()
-        })
-        .execute(connection)?
-        > 0,
-    )
+  pub fn create(
+    connection: &Connection,
+    hash: &Hasher,
+    tokenise: &Tokeniser,
+    user: &UserCreate,
+  ) -> Result<String, Error> {
+    diesel::insert_into(users::table)
+      .values(UserCreate {
+        password: hash(&user.password)?,
+        ..user.clone()
+      })
+      .execute(connection)?;
+    Ok(tokenise(user.id)?)
   }
 
   pub fn read(connection: &Connection, id: &Uuid) -> Result<User, Error> {
@@ -65,5 +78,23 @@ impl User {
 
   pub fn delete(connection: &Connection, id: &Uuid) -> Result<bool, Error> {
     Ok(diesel::delete(users::table.find(id)).execute(connection)? > 0)
+  }
+
+  pub fn login(
+    connection: &Connection,
+    verify: HashVerifier,
+    tokenise: &Tokeniser,
+    user: &UserLogin,
+  ) -> Result<String, Error> {
+    let (id, password_hash) = users::table
+      .filter(users::email.eq(&user.email))
+      .select((users::id, users::password))
+      .first::<(Uuid, String)>(connection)?;
+
+    if verify(&password_hash, &user.password)? {
+      Ok(tokenise(id)?)
+    } else {
+      Err(Error::Str("Not found"))
+    }
   }
 }
