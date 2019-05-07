@@ -22,14 +22,37 @@ impl Hasher {
       ad: &[],
       hash_length: 32,
     };
-    
+
     Hasher {
-      hash: Box::new(move |password: &str|
+      hash: Box::new(move |password: &str| {
         Ok(hash_encoded(password.as_bytes(), salt.as_bytes(), &config)?)
-      ),
-      verify: Box::new(move |hash: &str, password: &str|
+      }),
+      verify: Box::new(move |hash: &str, password: &str| {
         Ok(verify_encoded(hash, password.as_bytes())?)
-      ),
+      }),
     }
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn test_create_hash() {
+    let hasher = Hasher::new("somesalt".to_string());
+    let hash = (hasher.hash)("password");
+
+    assert_eq!(hash.is_ok(), true);
+  }
+
+  #[test]
+  fn test_verify_hash() {
+    let password = "password";
+    let hasher = Hasher::new("somesalt".to_string());
+    let hash = &(hasher.hash)(password).unwrap();
+    let verified_password = (hasher.verify)(hash, password);
+
+    assert_eq!(verified_password.is_ok(), true);
   }
 }
