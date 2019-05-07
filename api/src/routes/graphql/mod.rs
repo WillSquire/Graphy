@@ -1,30 +1,48 @@
 pub mod schema;
 
-use self::schema::Schema;
 use crate::context::Context;
-use juniper_rocket::{graphiql_source, GraphQLRequest, GraphQLResponse};
-use rocket::response::content::Html;
-use rocket::State;
+use crate::db::Db;
+use crate::hasher::Hasher;
+use crate::tokeniser::Tokeniser;
+use std::sync::Arc;
+use warp::{filters::BoxedFilter, Filter};
 
-#[get("/")]
-pub fn graphiql() -> Html<String> {
-  graphiql_source("/graphql")
+pub fn context(
+  db: Arc<Db>,
+  hasher: Arc<Hasher>,
+  tokeniser: Arc<Tokeniser>,
+) -> BoxedFilter<(Context,)> {
+  let db = warp::any().map(move || db.clone());
+  let hasher = warp::any().map(move || hasher.clone());
+  let tokeniser = warp::any().map(move || tokeniser.clone());
+
+  warp::any()
+    .and(db)
+    .and(hasher)
+    .and(tokeniser)
+    .and(warp::header::optional::<String>("authorization"))
+    .and_then(
+      |db: Arc<Db>, hasher: Arc<Hasher>, tokeniser: Arc<Tokeniser>, auth_header: Option<String>| {
+        let mut user = None;
+
+        if let Some(token) = auth_header {
+          match (tokeniser.verify)(&token) {
+            Ok(claims) => user = Some(claims.sub),
+            _ => return Err(warp::reject::not_found()), // TODO Return UNAUTHORIZED
+          }
+        }
+
+        Ok(Context {
+          db,
+          hasher,
+          tokeniser,
+          user,
+        })
+      },
+    )
+    .boxed()
 }
 
-#[get("/graphql?<request>")]
-pub fn get_graphql_handler(
-  context: State<Context>,
-  request: GraphQLRequest,
-  schema: State<Schema>,
-) -> GraphQLResponse {
-  request.execute(&schema, &context)
-}
-
-#[post("/graphql", data = "<request>")]
-pub fn post_graphql_handler(
-  context: State<Context>,
-  request: GraphQLRequest,
-  schema: State<Schema>,
-) -> GraphQLResponse {
-  request.execute(&schema, &context)
+pub fn graphql(context: BoxedFilter<(Context,)>) -> BoxedFilter<(warp::http::Response<Vec<u8>>,)> {
+  juniper_warp::make_graphql_filter(schema::new(), context)
 }

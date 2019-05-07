@@ -2,25 +2,50 @@
 
 A Rust GraphQL server starter project.
 
-## Setup
+## Quick setup
 
-Add secrets to `secrets/` directory:
+Create a `secrets/` directory in project root with the following files:
 
 - `db_user.txt`
 - `db_password.txt`
 - `db_name.txt`
+- `db_server.txt`
+- `hash_salt.txt`
+- `token_secret.txt`
 
-By Docker convention sensitive information is passed by
-secrets and is read by file, whilst non-sensitive
-is passed by a normal arg.
+## Manual
 
 ### Config
 
-Environmental specific arguments (such as `db_password`)
-are passed in at runtime via CLI `args` and
-parsed in `Config`.
+Any sensitive data gets passed at runtime either by value or file `args`.
 
-Project specific arguments are
+By value:
+
+```bash
+cargo run -- \
+  --db-user="..." \
+  --db-password="..." \
+  --db-name="..." \
+  --db-server="..." \ # Optional
+  --hash-salt="..." \
+  --token-secret="..."
+```
+
+By file:
+
+```bash
+cargo run -- \
+  --db-user-file="../secrets/db_user.txt" \
+  --db-password-file="../secrets/db_password.txt" \
+  --db-name-file="../secrets/db_name.txt" \
+  --hash-salt-file="../secrets/hash_salt.txt" \
+  --token-secret-file="../secrets/token_secret.txt"
+```
+
+These are passed at runtime to prevent baking sensitive information into the binary. Recommend passing these in by file if using Docker via secrets, the `Dockerfile` does this already.
+
+Project specific arguments are located with that feature
+(i.e. not in `Config`).
 
 ### For development
 

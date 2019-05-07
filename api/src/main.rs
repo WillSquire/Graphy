@@ -1,21 +1,17 @@
-#![feature(decl_macro, proc_macro_hygiene)]
-#![feature(trait_alias)]
-#![feature(fnbox)]
-
 extern crate argon2;
+extern crate chrono;
 #[macro_use]
 extern crate diesel;
-#[macro_use]
-extern crate rocket;
 extern crate jsonwebtoken as jwt;
 #[macro_use]
 extern crate juniper;
 extern crate clap;
-extern crate juniper_rocket;
+extern crate juniper_warp;
 extern crate r2d2;
 #[macro_use]
 extern crate serde;
 extern crate uuid;
+extern crate warp;
 
 mod config;
 mod context;
@@ -27,42 +23,34 @@ mod routes;
 mod tokeniser;
 
 use config::Config;
-use context::Context;
 use db::Db;
 use error::Error;
-use hasher::{hash_verify, make_hasher};
-use tokeniser::{make_token_verifier, make_tokeniser};
+use hasher::Hasher;
+use routes::graphql::{context, graphql};
+use std::sync::Arc;
+use tokeniser::Tokeniser;
+use warp::Filter;
 
 fn main() -> Result<(), Error> {
   let config = Config::new()?;
-  let db = Db::new(
+  let db = Arc::new(Db::new(
     &config.db_user,
     &config.db_password,
     &config.db_name,
     &config.db_server,
-  )?;
-  let hasher = make_hasher(config.hash_salt); // Todo: Take from `config`
-  let tokeniser = make_tokeniser("change_me"); // Todo: Take from `config`
-  let token_verify = make_token_verifier("change_me"); // Todo: Take from `config`
+  )?);
+  let hasher = Arc::new(Hasher::new(config.hash_salt));
+  let tokeniser = Arc::new(Tokeniser::new(config.token_secret));
 
-  rocket::ignite()
-    .manage(Context {
-      db,
-      hasher,
-      hash_verify,
-      tokeniser,
-      token_verify,
-    })
-    .manage(routes::graphql::schema::new())
-    .mount(
-      "/",
-      routes![
-        routes::graphql::graphiql,
-        routes::graphql::get_graphql_handler,
-        routes::graphql::post_graphql_handler
-      ],
-    )
-    .launch();
+  let log = warp::log("warp_server");
+
+  warp::serve(
+    warp::get2()
+      .and(warp::path::end().and(juniper_warp::graphiql_filter("/graphql")))
+      .or(warp::path("graphql").and(graphql(context(db, hasher, tokeniser))))
+      .with(log),
+  )
+  .run(([127, 0, 0, 1], 8000));
 
   Ok(())
 }

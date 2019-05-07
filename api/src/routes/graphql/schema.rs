@@ -1,4 +1,5 @@
 use crate::context::Context;
+use crate::error::Error;
 use crate::models::user::{User, UserCreate, UserEdit, UserLogin};
 use juniper::{FieldResult, RootNode};
 use uuid::Uuid;
@@ -17,29 +18,35 @@ graphql_object!(Mutation: Context |&self| {
   field createUser(&executor, user: UserCreate) -> FieldResult<String> {
     Ok(User::create(
       &executor.context().db.connect()?,
-      &executor.context().hasher,
-      &executor.context().tokeniser,
+      &executor.context().hasher.hash,
+      &executor.context().tokeniser.tokenise,
       &user
     )?)
   }
 
   field updateUser(&executor, user: UserEdit) -> FieldResult<bool> {
+    let admin = &executor.context().user.ok_or(Error::Str("Unauthorised - Must be logged in to update user"))?;
+    
     Ok(User::update(
       &executor.context().db.connect()?,
-      &executor.context().hasher,
+      &executor.context().hasher.hash,
+      &admin,
       &user
     )?)
   }
 
   field deleteUser(&executor, id: Uuid) -> FieldResult<bool> {
-    Ok(User::delete(&executor.context().db.connect()?, &id)?)
+    let admin = &executor.context().user.ok_or(Error::Str("Unauthorised - Must be logged in to delete user"))?;
+    let admin = &executor.context().user.ok_or(Error::Str("Unauthorised - Must be logged in to delete user"))?;
+
+    Ok(User::delete(&executor.context().db.connect()?, &admin, &id)?)
   }
   
   field login(&executor, user: UserLogin) -> FieldResult<String> {
     Ok(User::login(
       &executor.context().db.connect()?,
-      executor.context().hash_verify,
-      &executor.context().tokeniser,
+      &executor.context().hasher.verify,
+      &executor.context().tokeniser.tokenise,
       &user
     )?)
   }

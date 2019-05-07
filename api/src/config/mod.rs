@@ -2,12 +2,15 @@ use crate::error::Error;
 use clap::{App, Arg, ArgGroup};
 use std::fs;
 
+// Todo: Add validators (i.e. min length for token & salt, etc)
+
 pub struct Config {
   pub db_name: String,
   pub db_user: String,
   pub db_password: String,
   pub db_server: String,
   pub hash_salt: String,
+  pub token_secret: String,
 }
 
 impl Config {
@@ -105,6 +108,25 @@ impl Config {
           .args(&["hash-salt", "hash-salt-file"])
           .required(true),
       )
+      .arg(
+        Arg::with_name("token-secret")
+          .long("token-secret")
+          .value_name("SECRET")
+          .help("Sets token secret")
+          .takes_value(true),
+      )
+      .arg(
+        Arg::with_name("token-secret-file")
+          .long("token-secret-file")
+          .value_name("FILE")
+          .help("Sets token secret via file")
+          .takes_value(true),
+      )
+      .group(
+        ArgGroup::with_name("tokeniser-secret")
+          .args(&["token-secret", "token-secret-file"])
+          .required(true),
+      )
       .get_matches();
 
     let find_arg = |val, file| -> Result<String, Error> {
@@ -125,6 +147,7 @@ impl Config {
       db_password: find_arg("db-password", "db-password-file")?,
       db_server: args.value_of("db-server").unwrap().to_string(),
       hash_salt: find_arg("hash-salt", "hash-salt-file")?,
+      token_secret: find_arg("token-secret", "token-secret-file")?,
     })
   }
 }

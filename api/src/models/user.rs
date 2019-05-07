@@ -1,8 +1,8 @@
 use crate::db::Connection;
 use crate::error::Error;
-use crate::hasher::{HashVerifier, Hasher};
+use crate::hasher::{Hash, VerifyHash};
 use crate::models::schema::users;
-use crate::tokeniser::Tokeniser;
+use crate::tokeniser::Tokenise;
 use diesel::prelude::*;
 use uuid::Uuid;
 
@@ -44,8 +44,8 @@ pub struct UserLogin {
 impl User {
   pub fn create(
     connection: &Connection,
-    hash: &Hasher,
-    tokenise: &Tokeniser,
+    hash: &Hash,
+    tokenise: &Tokenise,
     user: &UserCreate,
   ) -> Result<String, Error> {
     diesel::insert_into(users::table)
@@ -66,7 +66,18 @@ impl User {
     )
   }
 
-  pub fn update(connection: &Connection, hash: &Hasher, user: &UserEdit) -> Result<bool, Error> {
+  pub fn update(
+    connection: &Connection,
+    hash: &Hash,
+    admin: &Uuid,
+    user: &UserEdit,
+  ) -> Result<bool, Error> {
+    if admin != &user.id {
+      return Err(Error::Str(
+        "Unauthorised - Only the given user can update their account",
+      ));
+    }
+
     let mut user_update = user.clone();
 
     if user_update.password.is_some() {
@@ -76,14 +87,20 @@ impl User {
     Ok(diesel::update(user).set(user_update).execute(connection)? > 0)
   }
 
-  pub fn delete(connection: &Connection, id: &Uuid) -> Result<bool, Error> {
+  pub fn delete(connection: &Connection, admin: &Uuid, id: &Uuid) -> Result<bool, Error> {
+    if admin != id {
+      return Err(Error::Str(
+        "Unauthorised - Only the given user can delete their account",
+      ));
+    }
+
     Ok(diesel::delete(users::table.find(id)).execute(connection)? > 0)
   }
 
   pub fn login(
     connection: &Connection,
-    verify: HashVerifier,
-    tokenise: &Tokeniser,
+    verify: &VerifyHash,
+    tokenise: &Tokenise,
     user: &UserLogin,
   ) -> Result<String, Error> {
     let (id, password_hash) = users::table
