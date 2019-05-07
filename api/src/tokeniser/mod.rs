@@ -60,3 +60,35 @@ pub struct Claims {
   pub jti: Uuid,
   pub sub: Uuid,
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn test_create_token() {
+    let tokeniser = Tokeniser::new("secret".to_string());
+    let token = (tokeniser.tokenise)(Uuid::new_v4());
+
+    assert_eq!(token.is_ok(), true);
+  }
+
+  #[test]
+  fn test_verify_token() {
+    let tokeniser = Tokeniser::new("secret".to_string());
+    let token = &(tokeniser.tokenise)(Uuid::new_v4()).unwrap();
+    let verified_token = (tokeniser.verify)(token);
+
+    assert_eq!(verified_token.is_ok(), true);
+  }
+
+  #[test]
+  fn test_verify_sub_claim() {
+    let id = Uuid::new_v4();
+    let tokeniser = Tokeniser::new("secret".to_string());
+    let token = &(tokeniser.tokenise)(id).unwrap();
+    let verified_token = (tokeniser.verify)(token).unwrap();
+
+    assert_eq!(verified_token.sub, id);
+  }
+}
