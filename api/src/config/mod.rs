@@ -14,7 +14,7 @@ pub struct Config {
 }
 
 impl Config {
-  pub fn new() -> Result<Config, Error> {
+  pub fn from_args() -> Result<Config, Error> {
     let args = App::new(env!("CARGO_PKG_NAME"))
       .version(env!("CARGO_PKG_VERSION"))
       .author(env!("CARGO_PKG_AUTHORS"))
