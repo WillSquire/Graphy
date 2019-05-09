@@ -1,8 +1,8 @@
 use crate::db::Connection;
 use crate::error::Error;
-use crate::hasher::{Hash, VerifyHash};
+use crate::hasher::{HashGenerator, HashVerifier};
 use crate::models::schema::users;
-use crate::tokeniser::Tokenise;
+use crate::tokeniser::TokenGenerator;
 use diesel::prelude::*;
 use uuid::Uuid;
 
@@ -44,8 +44,8 @@ pub struct UserLogin {
 impl User {
   pub fn create(
     connection: &Connection,
-    hash: &Hash,
-    tokenise: &Tokenise,
+    hash: &HashGenerator,
+    tokenise: &TokenGenerator,
     user: &UserCreate,
   ) -> Result<String, Error> {
     diesel::insert_into(users::table)
@@ -68,7 +68,7 @@ impl User {
 
   pub fn update(
     connection: &Connection,
-    hash: &Hash,
+    hash: &HashGenerator,
     admin: &Uuid,
     user: &UserEdit,
   ) -> Result<bool, Error> {
@@ -99,8 +99,8 @@ impl User {
 
   pub fn login(
     connection: &Connection,
-    verify: &VerifyHash,
-    tokenise: &Tokenise,
+    verify: &HashVerifier,
+    tokenise: &TokenGenerator,
     user: &UserLogin,
   ) -> Result<String, Error> {
     let (id, password_hash) = users::table

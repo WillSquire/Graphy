@@ -3,12 +3,12 @@ use chrono::{Duration, Utc};
 use jwt::{decode, encode, Header, Validation};
 use uuid::Uuid;
 
-pub type Tokenise = Box<dyn Fn(Uuid) -> Result<String, Error> + Send + Sync>;
-pub type VerifyToken = Box<dyn Fn(&str) -> Result<Claims, Error> + Send + Sync>;
+pub type TokenGenerator = Box<dyn Fn(Uuid) -> Result<String, Error> + Send + Sync>;
+pub type TokenVerifier = Box<dyn Fn(&str) -> Result<Claims, Error> + Send + Sync>;
 
 pub struct Tokeniser {
-  pub tokenise: Tokenise,
-  pub verify: VerifyToken,
+  pub generate: TokenGenerator,
+  pub verify: TokenVerifier,
 }
 
 impl Tokeniser {
@@ -21,7 +21,7 @@ impl Tokeniser {
     };
 
     Tokeniser {
-      tokenise: Box::new(move |user_id: Uuid| {
+      generate: Box::new(move |user_id: Uuid| {
         let iat = Utc::now();
         let exp = iat + Duration::minutes(15);
         let jti = Uuid::new_v4();
@@ -68,7 +68,7 @@ mod tests {
   #[test]
   fn test_create_token() {
     let tokeniser = Tokeniser::new("secret".to_string());
-    let token = (tokeniser.tokenise)(Uuid::new_v4());
+    let token = (tokeniser.generate)(Uuid::new_v4());
 
     assert_eq!(token.is_ok(), true);
   }
@@ -76,7 +76,7 @@ mod tests {
   #[test]
   fn test_verify_token() {
     let tokeniser = Tokeniser::new("secret".to_string());
-    let token = &(tokeniser.tokenise)(Uuid::new_v4()).unwrap();
+    let token = &(tokeniser.generate)(Uuid::new_v4()).unwrap();
     let verified_token = (tokeniser.verify)(token);
 
     assert_eq!(verified_token.is_ok(), true);
@@ -86,7 +86,7 @@ mod tests {
   fn test_verify_sub_claim() {
     let id = Uuid::new_v4();
     let tokeniser = Tokeniser::new("secret".to_string());
-    let token = &(tokeniser.tokenise)(id).unwrap();
+    let token = &(tokeniser.generate)(id).unwrap();
     let verified_token = (tokeniser.verify)(token).unwrap();
 
     assert_eq!(verified_token.sub, id);

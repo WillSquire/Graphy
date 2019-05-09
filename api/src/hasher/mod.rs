@@ -1,12 +1,12 @@
 use crate::error::Error;
 use argon2::{hash_encoded, verify_encoded, Config, ThreadMode, Variant, Version};
 
-pub type Hash = Box<dyn Fn(&str) -> Result<String, Error> + Send + Sync>;
-pub type VerifyHash = Box<dyn Fn(&str, &str) -> Result<bool, Error> + Send + Sync>;
+pub type HashGenerator = Box<dyn Fn(&str) -> Result<String, Error> + Send + Sync>;
+pub type HashVerifier = Box<dyn Fn(&str, &str) -> Result<bool, Error> + Send + Sync>;
 
 pub struct Hasher {
-  pub hash: Hash,
-  pub verify: VerifyHash,
+  pub generate: HashGenerator,
+  pub verify: HashVerifier,
 }
 
 impl Hasher {
@@ -24,7 +24,7 @@ impl Hasher {
     };
 
     Hasher {
-      hash: Box::new(move |password: &str| {
+      generate: Box::new(move |password: &str| {
         Ok(hash_encoded(password.as_bytes(), salt.as_bytes(), &config)?)
       }),
       verify: Box::new(move |hash: &str, password: &str| {
@@ -41,7 +41,7 @@ mod tests {
   #[test]
   fn test_create_hash() {
     let hasher = Hasher::new("somesalt".to_string());
-    let hash = (hasher.hash)("password");
+    let hash = (hasher.generate)("password");
 
     assert_eq!(hash.is_ok(), true);
   }
@@ -50,7 +50,7 @@ mod tests {
   fn test_verify_hash() {
     let password = "password";
     let hasher = Hasher::new("somesalt".to_string());
-    let hash = &(hasher.hash)(password).unwrap();
+    let hash = &(hasher.generate)(password).unwrap();
     let verified_password = (hasher.verify)(hash, password);
 
     assert_eq!(verified_password.is_ok(), true);

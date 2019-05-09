@@ -18,8 +18,8 @@ graphql_object!(Mutation: Context |&self| {
   field createUser(&executor, user: UserCreate) -> FieldResult<String> {
     Ok(User::create(
       &executor.context().db.connect()?,
-      &executor.context().hasher.hash,
-      &executor.context().tokeniser.tokenise,
+      &executor.context().hasher.generate,
+      &executor.context().tokeniser.generate,
       &user
     )?)
   }
@@ -29,7 +29,7 @@ graphql_object!(Mutation: Context |&self| {
     
     Ok(User::update(
       &executor.context().db.connect()?,
-      &executor.context().hasher.hash,
+      &executor.context().hasher.generate,
       &admin,
       &user
     )?)
@@ -46,7 +46,7 @@ graphql_object!(Mutation: Context |&self| {
     Ok(User::login(
       &executor.context().db.connect()?,
       &executor.context().hasher.verify,
-      &executor.context().tokeniser.tokenise,
+      &executor.context().tokeniser.generate,
       &user
     )?)
   }
