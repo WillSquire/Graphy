@@ -2,9 +2,18 @@
 
 A Rust GraphQL server starter project.
 
-## Quick setup
+## Quick start
 
-Create a `secrets/` directory in project root with the following files:
+Clone and replace `my-project` name with project name:
+
+```bash
+git clone git@github.com:WillSquire/Graphy.git \
+my-project \
+--depth=1 \
+--branch=master
+```
+
+Create `/secrets` directory in project root with these files:
 
 - `db_user.txt`
 - `db_password.txt`
@@ -12,6 +21,12 @@ Create a `secrets/` directory in project root with the following files:
 - `db_server.txt`
 - `hash_salt.txt`
 - `token_secret.txt`
+
+Run the stack on Docker:
+
+```bash
+docker-compose up
+```
 
 ## Manual
 

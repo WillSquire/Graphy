@@ -49,7 +49,7 @@ pub fn run(config: Config) -> Result<(), Error> {
       .or(warp::path("graphql").and(graphql(context(db, hasher, tokeniser))))
       .with(log),
   )
-  .run(([127, 0, 0, 1], 8000));
+  .run((config.address, 8000));
 
   Ok(())
 }

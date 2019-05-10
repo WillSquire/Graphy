@@ -15,9 +15,9 @@ RUN cargo build --release \
 # Build the project
 COPY ./src ./src
 RUN rm ./target/release/deps/api* \
-  && cargo build --release
+  && cargo build --release --bins
 
 # Copy binary to clean & minimal install
-FROM debian:stable-slim
+FROM rustlang/rust:nightly
 COPY --from=build /api/target/release/api .
 CMD ["./api"]

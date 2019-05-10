@@ -5,6 +5,7 @@ use std::fs;
 // Todo: Add validators (i.e. min length for token & salt, etc)
 
 pub struct Config {
+  pub address: [u8; 4],
   pub db_name: String,
   pub db_user: String,
   pub db_password: String,
@@ -141,7 +142,14 @@ impl Config {
       Err(Error::Str("Args missing"))
     };
 
+    let address = if cfg!(debug_assertions) {
+      [127, 0, 0, 1]
+    } else {
+      [0, 0, 0, 0]
+    };
+
     Ok(Config {
+      address,
       db_name: find_arg("db-name", "db-name-file")?,
       db_user: find_arg("db-user", "db-user-file")?,
       db_password: find_arg("db-password", "db-password-file")?,

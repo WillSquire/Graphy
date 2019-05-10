@@ -5,10 +5,18 @@ services:
     build:
       context: ./api
     secrets:
-      - db_name
       - db_user
       - db_password
-    command: ./api --db-name-file="/run/secrets/db_name" --db-user-file="/run/secrets/db_user" --db-password-file="/run/secrets/db_password"
+      - db_name
+      - hash_salt
+      - token_secret
+    command: ./api
+      --db-user-file="/run/secrets/db_user"
+      --db-password-file="/run/secrets/db_password"
+      --db-name-file="/run/secrets/db_name"
+      --db-server="db"
+      --hash-salt-file="/run/secrets/hash_salt"
+      --token-secret-file="/run/secrets/token_secret"
     depends_on:
       - db
     ports:
@@ -17,13 +25,13 @@ services:
   db:
     image: postgres:11.2-alpine
     secrets:
-      - db_name
       - db_user
       - db_password
+      - db_name
     environment:
-      POSTGRES_DATABASE_FILE: /run/secrets/db_name
       POSTGRES_USER_FILE: /run/secrets/db_user
       POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+      POSTGRES_DATABASE_FILE: /run/secrets/db_name
     ports:
       - 5432:5432
     volumes:
@@ -36,3 +44,7 @@ secrets:
     file: ./secrets/db_password.txt
   db_name:
     file: ./secrets/db_name.txt
+  hash_salt:
+    file: ./secrets/hash_salt.txt
+  token_secret:
+    file: ./secrets/token_secret.txt
