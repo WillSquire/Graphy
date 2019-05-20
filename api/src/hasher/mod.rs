@@ -10,6 +10,7 @@ pub struct Hasher {
 }
 
 impl Hasher {
+  /// Creates a new `Hasher` instance.
   pub fn new(salt: String) -> Hasher {
     let config = Config {
       variant: Variant::Argon2id,
@@ -39,17 +40,22 @@ mod tests {
   use super::*;
 
   #[test]
-  fn test_create_hash() {
-    let hasher = Hasher::new("somesalt".to_string());
-    let hash = (hasher.generate)("password");
+  fn test_generate_hash() {
+    let salt = "somesalt";
+    let password = "password";
+
+    let hasher = Hasher::new(salt.to_string());
+    let hash = (hasher.generate)(password);
 
     assert_eq!(hash.is_ok(), true);
   }
 
   #[test]
   fn test_verify_hash() {
+    let salt = "somesalt";
     let password = "password";
-    let hasher = Hasher::new("somesalt".to_string());
+
+    let hasher = Hasher::new(salt.to_string());
     let hash = &(hasher.generate)(password).unwrap();
     let verified_password = (hasher.verify)(hash, password);
 

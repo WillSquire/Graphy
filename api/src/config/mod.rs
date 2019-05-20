@@ -3,6 +3,7 @@ use clap::{App, Arg, ArgGroup};
 use std::fs;
 
 // Todo: Add validators (i.e. min length for token & salt, etc)
+// Todo: Remove `testing` and use compiler flags for identifying tests
 
 pub struct Config {
   pub address: [u8; 4],
@@ -11,10 +12,67 @@ pub struct Config {
   pub db_password: String,
   pub db_server: String,
   pub hash_salt: String,
+  pub testing: bool,
   pub token_secret: String,
 }
 
 impl Config {
+  /// Creates a new `Config` instance.
+  ///
+  /// Example usage:
+  ///
+  /// ```
+  /// use api::config::Config;
+  ///
+  /// let config = Config::new(
+  ///   "test", // db_name
+  ///   "tester", // db_user
+  ///   "test", // db_password
+  ///   "127.0.0.1", // db_server
+  ///   "somesalt", // hash_salt
+  ///   "secret", // token_secret
+  /// );
+  ///
+  /// assert_eq!(config.db_name, "test");
+  /// ```
+  pub fn new(
+    db_name: &str,
+    db_user: &str,
+    db_password: &str,
+    db_server: &str,
+    hash_salt: &str,
+    testing: bool,
+    token_secret: &str,
+  ) -> Config {
+    let address = if cfg!(debug_assertions) {
+      [127, 0, 0, 1]
+    } else {
+      [0, 0, 0, 0]
+    };
+
+    Config {
+      address,
+      db_name: db_name.to_string(),
+      db_user: db_user.to_string(),
+      db_password: db_password.to_string(),
+      db_server: db_server.to_string(),
+      hash_salt: hash_salt.to_string(),
+      testing,
+      token_secret: token_secret.to_string(),
+    }
+  }
+
+  /// For usage in binary implementation. Parses
+  /// `args` from the command line to create a new
+  /// `Config` instance.
+  ///
+  /// Example usage:
+  ///
+  /// ```no_run
+  /// use api::config::Config;
+  ///
+  /// let config = Config::from_args().unwrap();
+  /// ```
   pub fn from_args() -> Result<Config, Error> {
     let args = App::new(env!("CARGO_PKG_NAME"))
       .version(env!("CARGO_PKG_VERSION"))
@@ -142,20 +200,14 @@ impl Config {
       Err(Error::Str("Args missing"))
     };
 
-    let address = if cfg!(debug_assertions) {
-      [127, 0, 0, 1]
-    } else {
-      [0, 0, 0, 0]
-    };
-
-    Ok(Config {
-      address,
-      db_name: find_arg("db-name", "db-name-file")?,
-      db_user: find_arg("db-user", "db-user-file")?,
-      db_password: find_arg("db-password", "db-password-file")?,
-      db_server: args.value_of("db-server").unwrap().to_string(),
-      hash_salt: find_arg("hash-salt", "hash-salt-file")?,
-      token_secret: find_arg("token-secret", "token-secret-file")?,
-    })
+    Ok(Config::new(
+      &find_arg("db-name", "db-name-file")?,
+      &find_arg("db-user", "db-user-file")?,
+      &find_arg("db-password", "db-password-file")?,
+      args.value_of("db-server").unwrap(),
+      &find_arg("hash-salt", "hash-salt-file")?,
+      false,
+      &find_arg("token-secret", "token-secret-file")?,
+    ))
   }
 }

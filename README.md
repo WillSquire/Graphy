@@ -8,9 +8,9 @@ Clone and replace `my-project` name with project name:
 
 ```bash
 git clone git@github.com:WillSquire/Graphy.git \
-my-project \
---depth=1 \
---branch=master
+  my-project \
+  --depth=1 \
+  --branch=master
 ```
 
 Create `/secrets` directory in project root with these files:

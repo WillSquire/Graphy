@@ -1,5 +1,6 @@
 use argon2;
 use diesel;
+use diesel_migrations;
 use jwt;
 use r2d2;
 use std::fmt;
@@ -12,6 +13,7 @@ use std::io;
 #[derive(Debug)]
 pub enum Error {
   Diesel(diesel::result::Error),
+  DieselMigrations(diesel_migrations::RunMigrationsError),
   Hasher(argon2::Error),
   Jwt(jwt::errors::Error),
   Io(io::Error),
@@ -23,6 +25,7 @@ impl fmt::Display for Error {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     match *self {
       Error::Diesel(ref err) => err.fmt(f),
+      Error::DieselMigrations(ref err) => err.fmt(f),
       Error::Hasher(ref err) => err.fmt(f),
       Error::Jwt(ref err) => err.fmt(f),
       Error::Io(ref err) => err.fmt(f),
@@ -35,6 +38,12 @@ impl fmt::Display for Error {
 impl From<diesel::result::Error> for Error {
   fn from(err: diesel::result::Error) -> Self {
     Error::Diesel(err)
+  }
+}
+
+impl From<diesel_migrations::RunMigrationsError> for Error {
+  fn from(err: diesel_migrations::RunMigrationsError) -> Self {
+    Error::DieselMigrations(err)
   }
 }
 

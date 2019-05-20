@@ -67,16 +67,22 @@ mod tests {
 
   #[test]
   fn test_create_token() {
-    let tokeniser = Tokeniser::new("secret".to_string());
-    let token = (tokeniser.generate)(Uuid::new_v4());
+    let secret = "secret";
+    let id = Uuid::new_v4();
+
+    let tokeniser = Tokeniser::new(secret.to_string());
+    let token = (tokeniser.generate)(id);
 
     assert_eq!(token.is_ok(), true);
   }
 
   #[test]
   fn test_verify_token() {
-    let tokeniser = Tokeniser::new("secret".to_string());
-    let token = &(tokeniser.generate)(Uuid::new_v4()).unwrap();
+    let secret = "secret";
+    let id = Uuid::new_v4();
+
+    let tokeniser = Tokeniser::new(secret.to_string());
+    let token = &(tokeniser.generate)(id).unwrap();
     let verified_token = (tokeniser.verify)(token);
 
     assert_eq!(verified_token.is_ok(), true);
@@ -84,8 +90,10 @@ mod tests {
 
   #[test]
   fn test_verify_sub_claim() {
+    let secret = "secret";
     let id = Uuid::new_v4();
-    let tokeniser = Tokeniser::new("secret".to_string());
+
+    let tokeniser = Tokeniser::new(secret.to_string());
     let token = &(tokeniser.generate)(id).unwrap();
     let verified_token = (tokeniser.verify)(token).unwrap();
 
