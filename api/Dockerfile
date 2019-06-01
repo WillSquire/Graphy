@@ -14,6 +14,7 @@ RUN cargo build --release \
 
 # Build the project
 COPY ./src ./src
+COPY ./migrations ./migrations
 RUN rm ./target/release/deps/api* \
   && cargo build --release --bins
 
