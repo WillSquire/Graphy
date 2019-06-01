@@ -4,16 +4,16 @@ A Rust GraphQL server starter project.
 
 ## Quick start
 
-Clone and replace `my-project` name with project name:
+Clone repo with `project-name`:
 
 ```bash
 git clone git@github.com:WillSquire/Graphy.git \
-  my-project \
+  project-name \
   --depth=1 \
   --branch=master
 ```
 
-Create `/secrets` directory in project root with these files:
+Create `/secrets` directory in project root with these files and their values:
 
 - `db_user.txt`
 - `db_password.txt`
@@ -31,7 +31,7 @@ docker-compose up
 
 ### Config
 
-Any sensitive data gets passed at runtime either by value or file `args`.
+Any sensitive data is passed at runtime either by value or file `args`.
 
 By value:
 
@@ -56,7 +56,7 @@ cargo run -- \
   --token-secret-file="../secrets/token_secret.txt"
 ```
 
-These are passed at runtime to prevent baking sensitive information into the binary. Recommend passing these in by file if using Docker via secrets, the `Dockerfile` does this already.
+Note these are passed at runtime to avoid retrieval through decompilers. It's recommend that these are passed by file if using Docker via secrets. The `Dockerfile` does this already.
 
 Project specific arguments are located with that feature
 (i.e. not in `Config`).
