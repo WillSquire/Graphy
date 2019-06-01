@@ -37,7 +37,6 @@ graphql_object!(Mutation: Context |&self| {
 
   field deleteUser(&executor, id: Uuid) -> FieldResult<bool> {
     let admin = &executor.context().user.ok_or(Error::Str("Unauthorised - Must be logged in to delete user"))?;
-    let admin = &executor.context().user.ok_or(Error::Str("Unauthorised - Must be logged in to delete user"))?;
 
     Ok(User::delete(&executor.context().db.connect()?, &admin, &id)?)
   }
