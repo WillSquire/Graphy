@@ -18,7 +18,6 @@ Create `/secrets` directory in project root with these files:
 - `db_user.txt`
 - `db_password.txt`
 - `db_name.txt`
-- `db_server.txt`
 - `hash_salt.txt`
 - `token_secret.txt`
 
