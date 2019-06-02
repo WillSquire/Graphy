@@ -59,7 +59,16 @@ fn it_create_user() {
 // fn it_read_user() { assert_eq!(false, true); }
 
 // #[test]
+// fn it_read_user_unauthenticated() { assert_eq!(false, true); }
+
+// #[test]
+// fn it_read_user_unauthorized() { assert_eq!(false, true); }
+
+// #[test]
 // fn it_update_user() { assert_eq!(false, true); }
+
+// #[test]
+// fn it_update_user_unauthenticated() { assert_eq!(false, true); }
 
 // #[test]
 // fn it_update_user_unauthorized() { assert_eq!(false, true); }
@@ -68,10 +77,16 @@ fn it_create_user() {
 // fn it_delete_user() { assert_eq!(false, true); }
 
 // #[test]
+// fn it_delete_user_unauthenticated() { assert_eq!(false, true); }
+
+// #[test]
 // fn it_delete_user_unauthorized() { assert_eq!(false, true); }
 
 // #[test]
 // fn it_login_user() { assert_eq!(false, true); }
+
+// #[test]
+// fn it_login_user_unauthenticated() { assert_eq!(false, true); }
 
 // #[test]
 // fn it_login_user_unauthorized() { assert_eq!(false, true); }

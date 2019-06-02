@@ -1,14 +1,23 @@
 use crate::context::Context;
 use crate::error::Error;
-use crate::models::user::{User, UserCreate, UserEdit, UserLogin};
+use crate::models::user::{User, UserCreate, UserUpdate, UserLogin};
+use crate::models::group::{Group, GroupCreate, GroupUpdate};
 use juniper::{FieldResult, RootNode};
 use uuid::Uuid;
 
 pub struct Query;
 
 graphql_object!(Query: Context |&self| {
-  field getUser(&executor, id: Uuid) -> FieldResult<User> {
-    Ok(User::read(&executor.context().db.connect()?, &id)?)
+  field User(&executor, user_id: Uuid) -> FieldResult<User> {
+    let admin_id = &executor.context().user.ok_or(Error::Str("Unauthorised - Must be logged in to view users"))?;
+
+    Ok(User::read(&executor.context().db.connect()?, &admin_id, &user_id)?)
+  }
+
+  field Group(&executor, group_id: Uuid) -> FieldResult<Group> {
+    let user_id = &executor.context().user.ok_or(Error::Str("Unauthorised - Must be logged in to view groups"))?;
+
+    Ok(Group::read(&executor.context().db.connect()?, &user_id, &group_id)?)
   }
 });
 
@@ -24,7 +33,7 @@ graphql_object!(Mutation: Context |&self| {
     )?)
   }
 
-  field updateUser(&executor, user: UserEdit) -> FieldResult<bool> {
+  field updateUser(&executor, user: UserUpdate) -> FieldResult<bool> {
     let admin = &executor.context().user.ok_or(Error::Str("Unauthorised - Must be logged in to update user"))?;
     
     Ok(User::update(
@@ -35,10 +44,10 @@ graphql_object!(Mutation: Context |&self| {
     )?)
   }
 
-  field deleteUser(&executor, id: Uuid) -> FieldResult<bool> {
+  field deleteUser(&executor, user_id: Uuid) -> FieldResult<bool> {
     let admin = &executor.context().user.ok_or(Error::Str("Unauthorised - Must be logged in to delete user"))?;
 
-    Ok(User::delete(&executor.context().db.connect()?, &admin, &id)?)
+    Ok(User::delete(&executor.context().db.connect()?, &admin, &user_id)?)
   }
   
   field login(&executor, user: UserLogin) -> FieldResult<String> {
@@ -48,6 +57,32 @@ graphql_object!(Mutation: Context |&self| {
       &executor.context().tokeniser.generate,
       &user
     )?)
+  }
+
+  field createGroup(&executor, group: GroupCreate) -> FieldResult<bool> {
+    let user_id = &executor.context().user.ok_or(Error::Str("Unauthorised - Must be logged in to create groups"))?;
+    
+    Ok(Group::create(
+      &executor.context().db.connect()?,
+      &user_id,
+      &group
+    )?)
+  }
+
+  field updateGroup(&executor, group: GroupUpdate) -> FieldResult<bool> {
+    let admin = &executor.context().user.ok_or(Error::Str("Unauthorised - Must be logged in to update group"))?;
+    
+    Ok(Group::update(
+      &executor.context().db.connect()?,
+      &admin,
+      &group
+    )?)
+  }
+
+  field deleteGroup(&executor, group_id: Uuid) -> FieldResult<bool> {
+    let admin = &executor.context().user.ok_or(Error::Str("Unauthorised - Must be logged in to delete user"))?;
+
+    Ok(Group::delete(&executor.context().db.connect()?, &admin, &group_id)?)
   }
 });
 

@@ -28,7 +28,7 @@ pub struct UserCreate {
 
 #[derive(AsChangeset, Clone, GraphQLInputObject, Identifiable, Insertable)]
 #[table_name = "users"]
-pub struct UserEdit {
+pub struct UserUpdate {
   pub id: Uuid,
   pub email: Option<String>,
   pub password: Option<String>,
@@ -57,11 +57,17 @@ impl User {
     Ok(tokenise(user.id)?)
   }
 
-  pub fn read(connection: &Connection, id: &Uuid) -> Result<User, Error> {
+  pub fn read(connection: &Connection, admin_id: &Uuid, user_id: &Uuid) -> Result<User, Error> {
+    if admin_id != user_id {
+      return Err(Error::Str(
+        "Unauthorised - Only the given user can view their account",
+      ));
+    }
+
     Ok(
       users::table
         .select((users::id, users::email, users::name))
-        .find(id)
+        .find(user_id)
         .first::<User>(connection)?,
     )
   }
@@ -69,10 +75,10 @@ impl User {
   pub fn update(
     connection: &Connection,
     hash: &HashGenerator,
-    admin: &Uuid,
-    user: &UserEdit,
+    admin_id: &Uuid,
+    user: &UserUpdate,
   ) -> Result<bool, Error> {
-    if admin != &user.id {
+    if admin_id != &user.id {
       return Err(Error::Str(
         "Unauthorised - Only the given user can update their account",
       ));
@@ -87,14 +93,14 @@ impl User {
     Ok(diesel::update(user).set(user_update).execute(connection)? > 0)
   }
 
-  pub fn delete(connection: &Connection, admin: &Uuid, id: &Uuid) -> Result<bool, Error> {
-    if admin != id {
+  pub fn delete(connection: &Connection, admin_id: &Uuid, user_id: &Uuid) -> Result<bool, Error> {
+    if admin_id != user_id {
       return Err(Error::Str(
         "Unauthorised - Only the given user can delete their account",
       ));
     }
 
-    Ok(diesel::delete(users::table.find(id)).execute(connection)? > 0)
+    Ok(diesel::delete(users::table.find(user_id)).execute(connection)? > 0)
   }
 
   pub fn login(

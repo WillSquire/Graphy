@@ -30,6 +30,7 @@ impl Config {
   ///   "test", // db_password
   ///   "127.0.0.1", // db_server
   ///   "somesalt", // hash_salt
+  ///   false, // testing flag
   ///   "secret", // token_secret
   /// );
   ///
