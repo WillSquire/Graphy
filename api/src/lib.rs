@@ -17,10 +17,10 @@ extern crate warp;
 
 pub mod config;
 mod context;
-mod db;
+pub mod db;
 pub mod error;
-mod hasher;
-mod models;
+pub mod hasher;
+pub mod models;
 mod routes;
 pub mod tokeniser;
 
@@ -33,7 +33,7 @@ use std::sync::Arc;
 use tokeniser::Tokeniser;
 use warp::Filter;
 
-pub fn run(config: Config) -> Result<(), Error> {
+pub fn run(config: &Config) -> Result<(), Error> {
   let address = config.address;
   warp::serve(server(config)?).run((address, 8000));
 
@@ -41,7 +41,7 @@ pub fn run(config: Config) -> Result<(), Error> {
 }
 
 pub fn server(
-  config: Config,
+  config: &Config,
 ) -> Result<impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection>, Error> {
   let db = Arc::new(Db::new(
     &config.db_user,
@@ -50,8 +50,8 @@ pub fn server(
     &config.db_server,
     config.testing,
   )?);
-  let hasher = Arc::new(Hasher::new(config.hash_salt));
-  let tokeniser = Arc::new(Tokeniser::new(config.token_secret));
+  let hasher = Arc::new(Hasher::new(&config.hash_salt));
+  let tokeniser = Arc::new(Tokeniser::new(&config.token_secret));
   let log = warp::log("warp_server");
 
   Ok(

@@ -12,9 +12,10 @@ pub struct Tokeniser {
 }
 
 impl Tokeniser {
-  pub fn new(secret: String) -> Tokeniser {
+  pub fn new(secret: &str) -> Tokeniser {
     let iss = env!("CARGO_PKG_NAME").to_string();
-    let secret2 = secret.clone(); // Can't `move` twice, don't want `Arc`
+    let secret_clone1 = secret.to_string();
+    let secret_clone2 = secret.to_string(); // Can't `move` twice, don't want `Arc`
     let validation_config = Validation {
       iss: Some(iss.clone()),
       ..Default::default()
@@ -35,11 +36,11 @@ impl Tokeniser {
             jti,
             sub: user_id,
           },
-          secret.as_bytes(),
+          secret_clone1.as_bytes(),
         )?)
       }),
       verify: Box::new(move |token: &str| {
-        Ok(decode::<Claims>(token, secret2.as_bytes(), &validation_config)?.claims)
+        Ok(decode::<Claims>(token, secret_clone2.as_bytes(), &validation_config)?.claims)
       }),
     }
   }
@@ -70,7 +71,7 @@ mod tests {
     let secret = "secret";
     let id = Uuid::new_v4();
 
-    let tokeniser = Tokeniser::new(secret.to_string());
+    let tokeniser = Tokeniser::new(secret);
     let token = (tokeniser.generate)(id);
 
     assert_eq!(token.is_ok(), true);
@@ -81,7 +82,7 @@ mod tests {
     let secret = "secret";
     let id = Uuid::new_v4();
 
-    let tokeniser = Tokeniser::new(secret.to_string());
+    let tokeniser = Tokeniser::new(secret);
     let token = &(tokeniser.generate)(id).unwrap();
     let verified_token = (tokeniser.verify)(token);
 
@@ -93,7 +94,7 @@ mod tests {
     let secret = "secret";
     let id = Uuid::new_v4();
 
-    let tokeniser = Tokeniser::new(secret.to_string());
+    let tokeniser = Tokeniser::new(secret);
     let token = &(tokeniser.generate)(id).unwrap();
     let verified_token = (tokeniser.verify)(token).unwrap();
 

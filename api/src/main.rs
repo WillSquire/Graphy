@@ -6,5 +6,5 @@ use api::{config::Config, error::Error, run};
 /// Use `lib.rs` for testing.
 fn main() -> Result<(), Error> {
   let config = Config::from_args()?;
-  run(config)
+  run(&config)
 }

@@ -11,7 +11,7 @@ pub struct Hasher {
 
 impl Hasher {
   /// Creates a new `Hasher` instance.
-  pub fn new(salt: String) -> Hasher {
+  pub fn new(salt: &str) -> Hasher {
     let config = Config {
       variant: Variant::Argon2id,
       version: Version::Version13,
@@ -24,9 +24,11 @@ impl Hasher {
       hash_length: 32,
     };
 
+    let salt_clone = salt.to_string();
+
     Hasher {
       generate: Box::new(move |password: &str| {
-        Ok(hash_encoded(password.as_bytes(), salt.as_bytes(), &config)?)
+        Ok(hash_encoded(password.as_bytes(), salt_clone.as_bytes(), &config)?)
       }),
       verify: Box::new(move |hash: &str, password: &str| {
         Ok(verify_encoded(hash, password.as_bytes())?)
@@ -44,7 +46,7 @@ mod tests {
     let salt = "somesalt";
     let password = "password";
 
-    let hasher = Hasher::new(salt.to_string());
+    let hasher = Hasher::new(salt);
     let hash = (hasher.generate)(password);
 
     assert_eq!(hash.is_ok(), true);
@@ -55,7 +57,7 @@ mod tests {
     let salt = "somesalt";
     let password = "password";
 
-    let hasher = Hasher::new(salt.to_string());
+    let hasher = Hasher::new(salt);
     let hash = &(hasher.generate)(password).unwrap();
     let verified_password = (hasher.verify)(hash, password);
 
