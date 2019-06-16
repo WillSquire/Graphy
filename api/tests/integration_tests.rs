@@ -109,10 +109,56 @@ fn it_read_user() {
   assert_eq!(result_email, email);
 }
 
-// TODO: Finish integration tests
+#[test]
+fn it_read_user_unauthenticated() {
+  let id = Uuid::new_v4();
+  let email = format!("{}-test@test.com", id);
+  let password = "test";
+  let name = "Tester";
 
-// #[test]
-// fn it_read_user_unauthenticated() { assert_eq!(false, true); }
+  let config = common::config();
+  let db = common::db(&config);
+  let hasher = Hasher::new(&config.hash_salt);
+  let tokeniser = Tokeniser::new(&config.token_secret);
+  let server = common::server(&config);
+  User::create(
+    &db.connect().unwrap(),
+    &hasher.generate,
+    &tokeniser.generate,
+    &UserCreate {
+      id,
+      email: email.clone(),
+      password: password.to_string(),
+      name: Some(name.to_string()),
+    },
+  )
+  .unwrap();
+
+  let res = warp::test::request()
+    .header("content-type", "application/json")
+    .method("POST")
+    .path("/graphql")
+    .body(format!(
+      r#"
+      {{
+        "query": "query ($userId: Uuid!) {{\n  User(userId: $userId) {{\n    id\n    name\n    email\n  }}\n}}\n",
+        "variables": {{
+          "userId": "{}"
+        }}
+      }}
+      "#, id),
+    )
+    .reply(&server);
+  let json: Value = serde_json::from_str(str::from_utf8(res.body()).unwrap()).unwrap();
+  let data = &json["data"];
+  let error = &json["errors"][0]["message"].as_str().unwrap();
+
+  assert_eq!(res.status(), 200);
+  assert!(data.is_null());
+  assert_eq!(error, &"Unauthorised - Must be logged in to view users");
+}
+
+// TODO: Finish integration tests
 
 // #[test]
 // fn it_read_user_unauthorized() { assert_eq!(false, true); }
